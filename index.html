@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학습 기록부</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root{
+  --ink:#1F2A3C;
+  --ink-soft:#3D4A5E;
+  --paper:#F1EEE3;
+  --paper-line:#D9D3C1;
+  --card:#FBFAF5;
+  --brass:#A6823C;
+  --labor:#5F7A56;
+  --admin:#7C5B44;
+  --hr:#3F6584;
+  --org:#84557A;
+  --danger:#A14B3E;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Noto Sans KR', sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background-image: repeating-linear-gradient(
+    to bottom, transparent 0, transparent 34px, var(--paper-line) 34px, var(--paper-line) 35px
+  );
+  opacity:.35;
+  pointer-events:none;
+  z-index:0;
+}
+
+#app{
+  position:relative; z-index:1;
+  max-width:760px;
+  margin:0 auto;
+  padding:28px 18px 80px;
+}
+
+header.top{
+  border-bottom:2px solid var(--ink);
+  padding-bottom:14px;
+  margin-bottom:22px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  flex-wrap:wrap;
+  gap:10px;
+}
+header.top h1{
+  font-family:'Noto Serif KR', serif;
+  font-weight:700;
+  font-size:26px;
+  margin:0;
+  letter-spacing:.02em;
+}
+header.top .sub{
+  font-size:12.5px;
+  color:var(--ink-soft);
+  margin-top:4px;
+  font-family:'IBM Plex Mono', monospace;
+  letter-spacing:.02em;
+}
+.stat-box{
+  text-align:right;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12.5px;
+  color:var(--ink-soft);
+  line-height:1.6;
+}
+.stat-box b{ color:var(--brass); font-size:16px; }
+
+/* form */
+.slip{
+  background:var(--card);
+  border:1px solid var(--paper-line);
+  border-left:4px solid var(--brass);
+  padding:18px 20px;
+  margin-bottom:26px;
+  box-shadow:0 1px 3px rgba(31,42,60,.06);
+}
+.slip h2{
+  font-family:'Noto Serif KR', serif;
+  font-size:15px;
+  margin:0 0 14px;
+  color:var(--ink);
+}
+.row{ display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.field{ flex:1; min-width:120px; }
+.field label{
+  display:block;
+  font-size:11.5px;
+  color:var(--ink-soft);
+  margin-bottom:4px;
+  font-family:'IBM Plex Mono', monospace;
+}
+input[type=date], input[type=text], textarea{
+  width:100%;
+  border:1px solid var(--paper-line);
+  background:#fff;
+  padding:8px 10px;
+  font-family:'Noto Sans KR', sans-serif;
+  font-size:14px;
+  color:var(--ink);
+  border-radius:2px;
+}
+textarea{ resize:vertical; min-height:90px; line-height:1.55; white-space:pre-wrap; }
+input:focus, textarea:focus, select:focus, button:focus-visible{
+  outline:2px solid var(--hr); outline-offset:1px;
+}
+
+.subject-pills{ display:flex; gap:6px; flex-wrap:wrap; }
+.pill{
+  border:1px solid var(--paper-line);
+  background:#fff;
+  padding:6px 12px;
+  font-size:13px;
+  cursor:pointer;
+  border-radius:999px;
+  font-family:'Noto Sans KR', sans-serif;
+  color:var(--ink-soft);
+  transition:background .15s, color .15s, border-color .15s;
+}
+.pill[data-active="true"]{
+  color:#fff;
+  border-color:transparent;
+}
+.pill[data-subj="노동법"][data-active="true"]{ background:var(--labor); }
+.pill[data-subj="행정쟁송법"][data-active="true"]{ background:var(--admin); }
+.pill[data-subj="인사노무관리론"][data-active="true"]{ background:var(--hr); }
+.pill[data-subj="조직행동론"][data-active="true"]{ background:var(--org); }
+.pill[data-subj="전체"][data-active="true"]{ background:var(--ink); }
+
+.save-btn{
+  margin-top:6px;
+  background:var(--ink);
+  color:#fff;
+  border:none;
+  padding:10px 18px;
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+  border-radius:2px;
+  font-family:'Noto Sans KR', sans-serif;
+}
+.save-btn:hover{ background:var(--ink-soft); }
+
+/* filter/search */
+.toolbar{
+  display:flex; justify-content:space-between; align-items:center;
+  gap:10px; margin-bottom:16px; flex-wrap:wrap;
+}
+.search-box{
+  flex:1; min-width:160px;
+  border:1px solid var(--paper-line);
+  background:#fff;
+  padding:7px 10px;
+  font-size:13.5px;
+  border-radius:2px;
+}
+.backup-btn{
+  border:1px solid var(--brass);
+  background:#fff;
+  color:var(--brass);
+  padding:7px 12px;
+  font-size:12.5px;
+  font-family:'IBM Plex Mono', monospace;
+  cursor:pointer;
+  border-radius:2px;
+  white-space:nowrap;
+}
+.backup-btn:hover{ background:var(--brass); color:#fff; }
+
+/* list */
+.date-head{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12.5px;
+  color:var(--brass);
+  border-bottom:1px solid var(--paper-line);
+  padding-bottom:5px;
+  margin:22px 0 10px;
+  letter-spacing:.02em;
+}
+.entry{
+  background:var(--card);
+  border:1px solid var(--paper-line);
+  padding:14px 16px;
+  margin-bottom:10px;
+  position:relative;
+}
+.entry .seq{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:2px;
+  color:#fff;
+  margin-bottom:8px;
+}
+.seq.노동법{ background:var(--labor); }
+.seq.행정쟁송법{ background:var(--admin); }
+.seq.인사노무관리론{ background:var(--hr); }
+.seq.조직행동론{ background:var(--org); }
+.entry h3{
+  font-family:'Noto Serif KR', serif;
+  font-size:16px;
+  margin:0 0 8px;
+}
+.entry .content{
+  font-size:14px;
+  line-height:1.65;
+  white-space:pre-wrap;
+  color:var(--ink-soft);
+}
+.entry .actions{
+  display:flex; gap:14px;
+  margin-top:10px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11.5px;
+}
+.entry .actions button{
+  background:none; border:none; cursor:pointer;
+  color:var(--ink-soft); padding:0;
+  text-decoration:underline;
+}
+.entry .actions button.del{ color:var(--danger); }
+.entry .actions button:hover{ color:var(--ink); }
+
+.history-toggle{
+  margin-top:10px;
+  padding-top:8px;
+  border-top:1px dashed var(--paper-line);
+}
+.history-toggle summary{
+  cursor:pointer;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  color:var(--ink-soft);
+  list-style:none;
+}
+.history-toggle summary::-webkit-details-marker{ display:none; }
+.history-toggle summary::before{ content:"▸ "; }
+.history-toggle[open] summary::before{ content:"▾ "; }
+.history-item{
+  margin-top:8px;
+  padding:8px 10px;
+  background:var(--paper);
+  border-left:2px solid var(--paper-line);
+  font-size:12.5px;
+}
+.history-stamp{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  color:var(--ink-soft);
+  margin-bottom:4px;
+}
+.history-title{
+  font-weight:500;
+  color:var(--ink-soft);
+  margin-bottom:3px;
+  text-decoration:line-through;
+  opacity:.75;
+}
+.history-content{
+  color:var(--ink-soft);
+  white-space:pre-wrap;
+  opacity:.75;
+  line-height:1.5;
+}
+
+.empty{
+  text-align:center;
+  padding:50px 20px;
+  color:var(--ink-soft);
+  font-size:14px;
+  border:1px dashed var(--paper-line);
+}
+
+.input-with-voice{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+}
+.input-with-voice input, .input-with-voice textarea{ flex:1; }
+.voice-btn-col{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.voice-btn{
+  border:1px solid var(--paper-line);
+  background:#fff;
+  width:38px;
+  height:38px;
+  min-width:38px;
+  font-size:16px;
+  border-radius:50%;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background .15s, border-color .15s, transform .1s;
+}
+.voice-btn:hover{ border-color:var(--brass); }
+.voice-btn:active{ transform:scale(.94); }
+.voice-btn.listening{
+  background:var(--danger);
+  border-color:var(--danger);
+  animation:pulse 1.2s infinite;
+}
+@keyframes pulse{
+  0%{ box-shadow:0 0 0 0 rgba(161,75,62,.5); }
+  70%{ box-shadow:0 0 0 8px rgba(161,75,62,0); }
+  100%{ box-shadow:0 0 0 0 rgba(161,75,62,0); }
+}
+.voice-btn.unsupported{ opacity:.35; cursor:not-allowed; }
+
+.toast{
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  background:var(--ink); color:#fff;
+  padding:9px 18px; border-radius:3px;
+  font-size:13px; font-family:'Noto Sans KR', sans-serif;
+  opacity:0; transition:opacity .25s;
+  z-index:10;
+}
+.toast.show{ opacity:1; }
+
+@media (max-width:480px){
+  header.top{ flex-direction:column; align-items:flex-start; }
+  .stat-box{ text-align:left; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div>
+      <h1>학습 기록부</h1>
+      <div class="sub">공인노무사 2차 · 일일 누적 기록</div>
+    </div>
+    <div class="stat-box" id="statBox">불러오는 중...</div>
+  </header>
+
+  <section class="slip">
+    <h2>오늘의 기록</h2>
+    <div class="row">
+      <div class="field" style="max-width:150px;">
+        <label>날짜</label>
+        <input type="date" id="fDate">
+      </div>
+      <div class="field">
+        <label>과목</label>
+        <div class="subject-pills" id="subjectPicker"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>주제</label>
+        <div class="input-with-voice">
+          <input type="text" id="fTitle" placeholder="예: 거부처분의 처분성 판단기준">
+          <button type="button" class="voice-btn mic" id="micTitle" title="말로 입력">🎤</button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>내용 (두문자·요약·사례 등, 줄바꿈 그대로 저장됩니다)</label>
+        <div class="input-with-voice">
+          <textarea id="fContent" placeholder="오늘 배운 내용을 편하게 적어보세요."></textarea>
+          <div class="voice-btn-col">
+            <button type="button" class="voice-btn mic" id="micContent" title="말로 입력">🎤</button>
+            <button type="button" class="voice-btn speak" id="speakContent" title="들어보기">🔊</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="save-btn" id="saveBtn">기록 남기기</button>
+  </section>
+
+  <div class="toolbar">
+    <div class="subject-pills" id="filterPicker"></div>
+    <input type="text" class="search-box" id="searchBox" placeholder="제목이나 내용으로 찾기">
+    <button class="backup-btn" id="backupBtn" type="button">백업 다운로드</button>
+  </div>
+
+  <div id="list"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUBJECTS = ["노동법","행정쟁송법","인사노무관리론","조직행동론"];
+const STORAGE_KEY = "study-log";
+let data = { nextSeq:{}, entries:[] };
+let currentSubjectInput = SUBJECTS[0];
+let currentFilter = "전체";
+let searchTerm = "";
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+
+async function loadData(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){
+      data = JSON.parse(res.value);
+      if(!data.nextSeq) data.nextSeq = {};
+      if(!data.entries) data.entries = [];
+    }
+  }catch(e){
+    data = { nextSeq:{}, entries:[] };
+  }
+  SUBJECTS.forEach(s=>{ if(!data.nextSeq[s]) data.nextSeq[s] = 1; });
+}
+
+async function saveData(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(data), false);
+  }catch(e){
+    showToast("저장에 실패했어요. 다시 시도해주세요.");
+  }
+}
+
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 1600);
+}
+
+function formatDateHead(dateStr){
+  const d = new Date(dateStr+"T00:00:00");
+  const days = ["일","월","화","수","목","금","토"];
+  return d.getFullYear()+"년 "+String(d.getMonth()+1).padStart(2,"0")+"월 "+String(d.getDate()).padStart(2,"0")+"일 ("+days[d.getDay()]+")";
+}
+
+function computeStreak(){
+  const dateSet = new Set(data.entries.map(e=>e.date));
+  if(dateSet.size===0) return 0;
+  let streak = 0;
+  let cursor = new Date();
+  // allow today to be uncounted-yet without breaking streak
+  if(!dateSet.has(todayStr())){
+    cursor.setDate(cursor.getDate()-1);
+  }
+  while(true){
+    const ds = cursor.getFullYear()+"-"+String(cursor.getMonth()+1).padStart(2,"0")+"-"+String(cursor.getDate()).padStart(2,"0");
+    if(dateSet.has(ds)){
+      streak++;
+      cursor.setDate(cursor.getDate()-1);
+    } else break;
+  }
+  return streak;
+}
+
+function renderStats(){
+  const box = document.getElementById("statBox");
+  const total = data.entries.length;
+  const streak = computeStreak();
+  box.innerHTML = "총 <b>"+total+"</b>건 기록 · 연속 <b>"+streak+"</b>일";
+}
+
+function renderSubjectPicker(){
+  const wrap = document.getElementById("subjectPicker");
+  wrap.innerHTML = "";
+  SUBJECTS.forEach(s=>{
+    const b = document.createElement("button");
+    b.className = "pill";
+    b.type = "button";
+    b.textContent = s;
+    b.dataset.subj = s;
+    b.dataset.active = (s===currentSubjectInput);
+    b.onclick = ()=>{ currentSubjectInput = s; renderSubjectPicker(); };
+    wrap.appendChild(b);
+  });
+}
+
+function renderFilterPicker(){
+  const wrap = document.getElementById("filterPicker");
+  wrap.innerHTML = "";
+  ["전체", ...SUBJECTS].forEach(s=>{
+    const b = document.createElement("button");
+    b.className = "pill";
+    b.type = "button";
+    b.textContent = s;
+    b.dataset.subj = s;
+    b.dataset.active = (s===currentFilter);
+    b.onclick = ()=>{ currentFilter = s; renderFilterPicker(); renderList(); };
+    wrap.appendChild(b);
+  });
+}
+
+function escapeHtml(str){
+  return str.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function renderList(){
+  const list = document.getElementById("list");
+  let entries = [...data.entries];
+
+  if(currentFilter !== "전체"){
+    entries = entries.filter(e=>e.subject===currentFilter);
+  }
+  if(searchTerm.trim()){
+    const q = searchTerm.trim().toLowerCase();
+    entries = entries.filter(e=>
+      (e.title||"").toLowerCase().includes(q) ||
+      (e.content||"").toLowerCase().includes(q)
+    );
+  }
+  entries.sort((a,b)=> b.createdAt - a.createdAt);
+
+  if(entries.length===0){
+    list.innerHTML = '<div class="empty">아직 기록이 없어요. 오늘 배운 내용을 첫 줄로 남겨보세요.</div>';
+    return;
+  }
+
+  let html = "";
+  let lastDate = null;
+  entries.forEach(e=>{
+    if(e.date !== lastDate){
+      html += '<div class="date-head">'+formatDateHead(e.date)+'</div>';
+      lastDate = e.date;
+    }
+    const seqLabel = e.subject + " 제" + String(e.seq).padStart(3,"0") + "호";
+    const hasHistory = e.history && e.history.length > 0;
+    let historyHtml = "";
+    if(hasHistory){
+      const items = e.history.slice().reverse().map(h=>{
+        const d = new Date(h.editedAt);
+        const stamp = d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0");
+        return `<div class="history-item">
+            <div class="history-stamp">${stamp} 이전 내용</div>
+            <div class="history-title">${escapeHtml(h.title || "(제목 없음)")}</div>
+            <div class="history-content">${escapeHtml(h.content || "")}</div>
+          </div>`;
+      }).join("");
+      historyHtml = `
+        <details class="history-toggle">
+          <summary>이전 내용 보기 (${e.history.length})</summary>
+          ${items}
+        </details>`;
+    }
+    html += `
+      <div class="entry" data-id="${e.id}">
+        <span class="seq ${e.subject}">${seqLabel}</span>
+        <h3>${escapeHtml(e.title || "(제목 없음)")}</h3>
+        <div class="content">${escapeHtml(e.content || "")}</div>
+        <div class="actions">
+          <button class="copy">복사</button>
+          <button class="edit">수정</button>
+          <button class="del">삭제</button>
+        </div>
+        ${historyHtml}
+      </div>`;
+  });
+  list.innerHTML = html;
+
+  list.querySelectorAll(".entry").forEach(node=>{
+    const id = node.dataset.id;
+    node.querySelector(".copy").onclick = ()=>copyEntry(id);
+    node.querySelector(".edit").onclick = ()=>editEntry(id, node);
+    node.querySelector(".del").onclick = ()=>deleteEntry(id);
+  });
+}
+
+function copyEntry(id){
+  const e = data.entries.find(x=>x.id===id);
+  if(!e) return;
+  const text = e.title + "\n\n" + e.content;
+  navigator.clipboard.writeText(text).then(()=>{
+    showToast("복사했어요. 삼성노트에 붙여넣기 하세요.");
+  }).catch(()=>{
+    showToast("복사에 실패했어요.");
+  });
+}
+
+function editEntry(id, node){
+  const e = data.entries.find(x=>x.id===id);
+  if(!e) return;
+  node.innerHTML = `
+    <input type="text" class="edit-title" value="${escapeHtml(e.title)}" style="margin-bottom:8px;">
+    <textarea class="edit-content" style="min-height:110px;">${escapeHtml(e.content)}</textarea>
+    <div class="actions" style="margin-top:10px;">
+      <button class="save-edit">저장</button>
+      <button class="cancel-edit">취소</button>
+    </div>
+  `;
+  node.querySelector(".save-edit").onclick = async ()=>{
+    const newTitle = node.querySelector(".edit-title").value.trim();
+    const newContent = node.querySelector(".edit-content").value;
+    if(newTitle !== e.title || newContent !== e.content){
+      if(!e.history) e.history = [];
+      e.history.push({ title:e.title, content:e.content, editedAt: Date.now() });
+    }
+    e.title = newTitle;
+    e.content = newContent;
+    await saveData();
+    renderList();
+    showToast("수정했어요.");
+  };
+  node.querySelector(".cancel-edit").onclick = ()=>renderList();
+}
+
+async function deleteEntry(id){
+  if(!confirm("이 기록을 삭제할까요?")) return;
+  data.entries = data.entries.filter(e=>e.id!==id);
+  await saveData();
+  renderStats();
+  renderList();
+  showToast("삭제했어요.");
+}
+
+function downloadBackup(){
+  if(data.entries.length===0){
+    showToast("백업할 기록이 없어요.");
+    return;
+  }
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    nextSeq: data.nextSeq,
+    entries: data.entries
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = todayStr().replace(/-/g,"");
+  a.href = url;
+  a.download = "학습기록부_백업_" + stamp + ".json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("백업 파일을 다운로드했어요.");
+}
+
+async function handleSave(){
+  const date = document.getElementById("fDate").value || todayStr();
+  const title = document.getElementById("fTitle").value.trim();
+  const content = document.getElementById("fContent").value;
+
+  if(!title && !content.trim()){
+    showToast("주제나 내용을 입력해주세요.");
+    return;
+  }
+
+  const seq = data.nextSeq[currentSubjectInput] || 1;
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    seq: seq,
+    subject: currentSubjectInput,
+    date: date,
+    title: title,
+    content: content,
+    createdAt: Date.now()
+  };
+  data.entries.push(entry);
+  data.nextSeq[currentSubjectInput] = seq + 1;
+
+  await saveData();
+
+  document.getElementById("fTitle").value = "";
+  document.getElementById("fContent").value = "";
+
+  renderStats();
+  renderList();
+  showToast(entry.subject + " 제" + String(seq).padStart(3,"0") + "호로 기록했어요.");
+}
+
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+let activeRecognition = null;
+let activeMicBtn = null;
+
+function setupDictation(btnId, targetId){
+  const btn = document.getElementById(btnId);
+  if(!SpeechRecognitionAPI){
+    btn.classList.add("unsupported");
+    btn.title = "이 브라우저에서는 음성 입력이 지원되지 않아요";
+    btn.onclick = ()=>showToast("이 브라우저에서는 음성 입력이 지원되지 않아요.");
+    return;
+  }
+  btn.onclick = ()=>{
+    if(activeRecognition && activeMicBtn === btn){
+      activeRecognition.stop();
+      return;
+    }
+    if(activeRecognition){
+      activeRecognition.stop();
+    }
+    const target = document.getElementById(targetId);
+    const baseValue = target.value;
+    let finalText = "";
+
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = "ko-KR";
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onresult = (e)=>{
+      for(let i=e.resultIndex; i<e.results.length; i++){
+        if(e.results[i].isFinal){
+          finalText += e.results[i][0].transcript;
+        }
+      }
+      const sep = baseValue && !/[\s\n]$/.test(baseValue) ? " " : "";
+      target.value = baseValue + sep + finalText;
+    };
+    recognition.onerror = ()=>{
+      showToast("음성 인식 중 오류가 발생했어요.");
+    };
+    recognition.onend = ()=>{
+      btn.classList.remove("listening");
+      activeRecognition = null;
+      activeMicBtn = null;
+    };
+
+    recognition.start();
+    btn.classList.add("listening");
+    activeRecognition = recognition;
+    activeMicBtn = btn;
+    showToast("듣고 있어요. 다시 누르면 멈춰요.");
+  };
+}
+
+function setupSpeak(btnId, targetId){
+  const btn = document.getElementById(btnId);
+  if(!("speechSynthesis" in window)){
+    btn.classList.add("unsupported");
+    btn.title = "이 브라우저에서는 듣기 기능이 지원되지 않아요";
+    btn.onclick = ()=>showToast("이 브라우저에서는 듣기 기능이 지원되지 않아요.");
+    return;
+  }
+  btn.onclick = ()=>{
+    const text = document.getElementById(targetId).value.trim();
+    if(!text){
+      showToast("읽어줄 내용이 없어요.");
+      return;
+    }
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "ko-KR";
+    speechSynthesis.speak(utter);
+  };
+}
+
+async function init(){
+  document.getElementById("fDate").value = todayStr();
+  renderSubjectPicker();
+  renderFilterPicker();
+  document.getElementById("saveBtn").onclick = handleSave;
+  document.getElementById("backupBtn").onclick = downloadBackup;
+  setupDictation("micTitle", "fTitle");
+  setupDictation("micContent", "fContent");
+  setupSpeak("speakContent", "fContent");
+  document.getElementById("searchBox").oninput = (e)=>{
+    searchTerm = e.target.value;
+    renderList();
+  };
+
+  await loadData();
+  renderStats();
+  renderList();
+}
+
+init();
+</script>
+</body>
+</html>
